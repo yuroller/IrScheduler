@@ -1,20 +1,6 @@
 // Do not remove the include below
 #include "IrScheduler.h"
 
-const int buttonPin = 2;
-const int ledPin = 4;
-IRsend irsend;
-
-//The setup function is called once at startup of the sketch
-void setup()
-{
-// Add your initialization code here
-	Serial.begin(9600);
-	pinMode(ledPin, OUTPUT);
-	pinMode(buttonPin, INPUT);
-	digitalWrite(ledPin, LOW);
-}
-
 enum Key {
 	k_standby =    0x9A65,
 	k_av =         0x1AE5,
@@ -62,6 +48,22 @@ enum Key {
 	k_end_seq = 0
 };
 
+enum Pin {
+	PIN_IR_TX = 3,
+	PIN_BUTTON_UP = 7,
+	PIN_BUTTON_DOWN = 6,
+	PIN_BUTTON_ESC = 8,
+	PIN_BUTTON_OK = 9,
+	PIN_LED = 13,
+	PIN_LCD_RS = 12,
+	PIN_LCD_E = 11,
+	PIN_LCD_D4 = 5,
+	PIN_LCD_D5 = 4,
+	PIN_LCD_D6 = 10,
+	PIN_LCD_D7 = 2,
+	PIN_LCD_BACKLIGHT = 0,
+};
+
 const Key CHANNELS[] = {
 		k_0,
 		k_1,
@@ -82,14 +84,19 @@ const unsigned long PRE_DATA = 0x00FD0000;
 
 const int RECORDINGS[] = {5, -1, 7, -1, 22, -1};
 
-// The loop function is called in an endless loop
+// global objects
+IRsend irsend;
+menwiz tree;
+LiquidCrystal lcd(PIN_LCD_RS, PIN_LCD_E,
+		PIN_LCD_D4, PIN_LCD_D5,	PIN_LCD_D6, PIN_LCD_D7);
+
 bool pressed = false;
 
 void sendKey(Key k, unsigned long wait = 400)
 {
-	digitalWrite(ledPin, HIGH);
+	digitalWrite(PIN_LED, LOW);
 	irsend.sendNEC(PRE_DATA | k, 32);
-	digitalWrite(ledPin, LOW);
+	digitalWrite(PIN_LED, HIGH);
 	delay(wait);
 }
 
@@ -128,18 +135,83 @@ void stopRec() {
 	sendKey(k_standby);
 }
 
-size_t next_event = 0;
+size_t next_event;
 
+void applyClock() {
+  Serial.println("Apply clock");
+}
+
+void applySchedule() {
+  Serial.println("Apply schedule");
+}
+
+byte clock_hour = 0, clock_mins = 0;
+boolean active = 0;
+int program = 1;
+byte start_hour = 0, start_mins = 0, end_hour = 0, end_mins = 0;
+
+//The setup function is called once at startup of the sketch
+void setup()
+{
+// Add your initialization code here
+	Serial.begin(9600);
+	//pinMode(PIN_LED, OUTPUT);
+	//digitalWrite(PIN_LED, HIGH);
+
+	tree.begin(&lcd, 24, 2);
+	_menu *menu_root;
+	_menu *menu_set_clock, *menu_set_hour, *menu_set_mins, *menu_apply_clock;
+	_menu *menu_schedule_recording,
+		*menu_set_active,
+		*menu_set_program,
+		*menu_set_start_hour, *menu_set_start_mins,
+		*menu_set_end_hour, *menu_set_end_mins,
+		*menu_apply_schedule,
+		*menu_transmit_ir;
+	const __FlashStringHelper *APPLY = F("Apply");
+
+	menu_root = tree.addMenu(MW_ROOT, NULL, F("Root"));
+	  menu_set_clock = tree.addMenu(MW_SUBMENU, menu_root, F("Set Clock"));
+	    menu_set_hour = tree.addMenu(MW_VAR, menu_set_clock, F("Hour"));
+	      menu_set_hour->addVar(MW_AUTO_BYTE, &clock_hour, 0, 23, 1);
+	    menu_set_mins = tree.addMenu(MW_VAR, menu_set_clock, F("Mins"));
+	      menu_set_mins->addVar(MW_AUTO_BYTE, &clock_mins, 0, 59, 1);
+	    menu_apply_clock = tree.addMenu(MW_VAR, menu_set_clock, APPLY);
+	      menu_apply_clock->addVar(MW_ACTION, applyClock);
+	  menu_schedule_recording = tree.addMenu(MW_SUBMENU, menu_root, F("Schedule Recording"));
+	    menu_set_active = tree.addMenu(MW_VAR, menu_schedule_recording, F("Active"));
+	      menu_set_active->addVar(MW_BOOLEAN, &active);
+	    menu_set_program = tree.addMenu(MW_VAR, menu_schedule_recording, F("Program"));
+	      menu_set_program->addVar(MW_AUTO_INT, &program, 1, 999, 1);
+	    menu_set_start_hour = tree.addMenu(MW_VAR, menu_schedule_recording, F("Start Hour"));
+	      menu_set_start_hour->addVar(MW_AUTO_BYTE, &start_hour, 0, 23, 1);
+	    menu_set_start_mins = tree.addMenu(MW_VAR, menu_schedule_recording, F("Start Mins"));
+	      menu_set_start_mins->addVar(MW_AUTO_BYTE, &start_mins, 0, 59, 1);
+	    menu_set_end_hour = tree.addMenu(MW_VAR, menu_schedule_recording, F("End Hour"));
+	      menu_set_end_hour->addVar(MW_AUTO_BYTE, &end_hour, 0, 23, 1);
+	    menu_set_end_mins = tree.addMenu(MW_VAR, menu_schedule_recording, F("End Mins"));
+	      menu_set_end_mins->addVar(MW_AUTO_BYTE, &end_mins, 0, 59, 1);
+	    menu_apply_schedule = tree.addMenu(MW_VAR, menu_schedule_recording, APPLY);
+	      menu_apply_schedule->addVar(MW_ACTION, applySchedule);
+	  menu_transmit_ir = tree.addMenu(MW_VAR, menu_root, F("Transmit IR"));
+	    menu_transmit_ir->addVar(MW_ACTION, stopRec);
+
+	    tree.navButtons(PIN_BUTTON_UP, PIN_BUTTON_DOWN, PIN_BUTTON_ESC, PIN_BUTTON_OK);
+}
+
+// The loop function is called in an endless loop
 void loop()
 {
 //Add your repeated code here
 	  // technisat
       //irsend.sendRC5(0x1A84, 12);
-	int buttonState = digitalRead(buttonPin);
+	tree.draw();
+#if 0
+	int buttonState = digitalRead(PIN_BUTTON_OK);
 
 	  // check if the pushbutton is pressed.
 	  // if it is, the buttonState is HIGH:
-	  if (buttonState == HIGH) {
+	  if (buttonState == LOW) {
 		if (!pressed && next_event < ARRAY_LEN(RECORDINGS)) {
 			pressed = true;
 			if (RECORDINGS[next_event]  < 0) {
@@ -152,4 +224,5 @@ void loop()
 	  } else {
 	    pressed = false;
 	  }
+#endif
 }
