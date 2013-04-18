@@ -26,7 +26,7 @@
 #ifndef MENWIZ_h
 #define MENWIZ_h
 
-#define EEPROM_SUPPORT     //uncomment if you want to use the readEeprom and writeEeprom methods!
+//#define EEPROM_SUPPORT     //uncomment if you want to use the readEeprom and writeEeprom methods!
 #define BUTTON_SUPPORT     //uncomment if you want to use the readEeprom and writeEeprom methods!
 
 #include <Wire.h>
