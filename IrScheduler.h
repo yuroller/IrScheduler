@@ -10,8 +10,10 @@
 //add your includes for the project IrScheduler here
 #include "IRremote.h"
 #include "LiquidCrystal.h"
-#include "MENWIZ.h"
 #include "ds3231.h"
+#include "Time.h"
+#include "PropertyMenu.h"
+#include "Wire.h"
 
 //end of add your includes here
 #ifdef __cplusplus
