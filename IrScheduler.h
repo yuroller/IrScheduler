@@ -14,6 +14,7 @@
 #include "Time.h"
 #include "PropertyMenu.h"
 #include "Wire.h"
+#include "Buttons.h"
 
 //end of add your includes here
 #ifdef __cplusplus
