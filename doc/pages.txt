@@ -1,0 +1,35 @@
+Root
+01234567890123456789
+ON  12:45 12/02/2013  <- ON quando il decoder è acceso, OFF quando è spento
+REC  nnn 14/05 14:50  <- quando REC la backlight è accesa e viene mostrato l'orario di fine registrazione; "   " backlight spenta se non si interagisce
+
+
+Menu
+01234567890123456789
+ RECORDINGS..      ^
+ SETTINGS..        -
+ INFO..
+ BACK
+ 
+Recordings
+01234567890123456789
+ x nnn 14/05 12:30 ^
+ o nnn 15/05 20:50 -
+ BACK
+
+Edit recording
+01234567890123456789
+ x  nnn 12:30-14:50
+ 14/05  MTWT-SS [OK]
+ 
+Settings
+01234567890123456789
+  12/04/2013 16:37
+       [CANCEL] [OK]
+
+Info
+01234567890123456789
+   IR SCHEDULER
+    VER. 1.0.1  [OK]
+    
+Pulsanti: NEXT, PREV, SELECT
